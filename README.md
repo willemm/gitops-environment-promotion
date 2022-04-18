@@ -1,9 +1,11 @@
-# How to Model Your Gitops Environments
+# How to Model Your Gitops Environments using branches per environment
 
 This is a counter-example on how to model Kustomize folders for a GitOps application and promote releases
 between environments, using one branch per environment.  This has been forked from https://github.com/kostis-codefresh/gitops-environment-promotion and changed to use the branch-per-environment pattern.
 
-THis fork has been made to address a discussion which can be found here: https://github.com/argoproj/argo-cd/discussions/5667#discussioncomment-2087895
+This fork has been made to address a discussion which can be found here: https://github.com/argoproj/argo-cd/discussions/5667#discussioncomment-2087895
+
+See also [tenets and scenario's](SCENARIOS.md)
 
 ## Folder structure
 
