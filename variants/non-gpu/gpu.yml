@@ -9,8 +9,5 @@ spec:
       containers:
       - name: webserver-simple
         env:
-        - name: ENV
-          value: "prod-asia"
         - name: GPU_ENABLED
-          value: "1"
-      
+          value: "0"

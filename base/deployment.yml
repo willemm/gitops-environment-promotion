@@ -21,3 +21,14 @@ spec:
         image: docker.io/kostiscodefresh/simple-env-app:1.0
         ports:
         - containerPort: 8080
+        env:
+        - name: UI_THEME
+          value: "dark"
+        - name: CACHE_SIZE
+          value: "1024kb"
+        - name: PAGE_LIMIT
+          value: "25"
+        - name: SORTING
+          value: "ascending"    
+        - name: N_BUCKETS
+          value: "42"          

@@ -10,9 +10,9 @@ resources:
 components:
   - ../../variants/prod
   - ../../variants/asia
+  - ../../variants/gpu
 
 patchesStrategicMerge:
-- deployment.yml
-- version.yml
+- environment.yml
 - replicas.yml
-- settings.yml
+

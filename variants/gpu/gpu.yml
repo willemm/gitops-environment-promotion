@@ -8,4 +8,6 @@ spec:
     spec:
       containers:
       - name: webserver-simple
-        image: docker.io/kostiscodefresh/simple-env-app:1.0
+        env:
+        - name: GPU_ENABLED
+          value: "1"

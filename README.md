@@ -1,17 +1,19 @@
 # How to Model Your Gitops Environments
 
-This is an example on how to model Kustomize folders for a GitOps application and promote releases
-between environments.
+This is a counter-example on how to model Kustomize folders for a GitOps application and promote releases
+between environments, using one branch per environment.  This has been forked from https://github.com/kostis-codefresh/gitops-environment-promotion and changed to use the branch-per-environment pattern.
 
-Read the [full blog post](https://codefresh.io/about-gitops/how-to-model-your-gitops-environments-and-promote-releases-between-them/). You might want to see the [application source code as well](https://github.com/kostis-codefresh/gitops-promotion-source-code).
+THis fork has been made to address a discussion which can be found here: https://github.com/argoproj/argo-cd/discussions/5667#discussioncomment-2087895
 
 ## Folder structure
 
-The base directory holds configuration which is common to all environments. It is not expected to change often. If you want to do changes to multiple environments at the same time it is best to use the “variants” folder.
+The base directory holds configuration which is common to all environments.  Because of the branching structure, there will be temporary differences between environments, but these are only temporal. (i.e. any change on one environment will eventually appear on all environments).
 
-The variants folder (a.k.a mixins, a.k.a. components) holds common characteristics between environments. It is up to you to define what exactly you think is “common” between your environments after researching your application as discussed in the previous section.
+The variants folder holds characteristics that are common to some environments. They are not expected to change often, but are expected to remain different throughout the life of the application.
 
-In the example application, we have variants for all prod and non-prod environments and also the regions. Here is an example of the prod variant that applies to ALL production environments.
+The envs folder holds the kustomization.yaml that defines which variants are used for the kustomization.  It is expected to change very infrequently.
+
+In the example application, we have variants for all prod and non-prod environments, the regions and also gpu or non-gpu. Here is an example of the prod variant that applies to ALL production environments.
 
 ```yaml
 ---
@@ -58,19 +60,20 @@ resources:
 components:
   - ../../variants/non-prod
   - ../../variants/asia
+  - ../../variants/gpu
 
 patchesStrategicMerge:
-- deployment.yml
-- version.yml
+- environment.yml
 - replicas.yml
-- settings.yml
 ```
 
-First we define some common properties. We inherit all configuration from base, from non-prod environments and for all environments in Asia.
+First we define some common properties. We inherit all configuration from base, from non-prod environments, for all environments in Asia and for all environments with gpu.
 
-The key point here is the patches that we apply. The version.yml and replicas.yml are self-explanatory. They only define the image and replicas on their own and nothing else.
+The key point here is the patches that we apply.  The environment.yml only defines The replicas.yml is separate because we assume each environment will have different requirements for replica settings.  
 
-The version.yml file (which is the most important thing to promote between environments) defines only the image of the application and nothing else.
+Inside the base folder, the version.yml file (which is the most important thing to promote between environments) defines only the image of the application and nothing else.
+
+The main reason for making this a separate file is so that the build pipeline can automatically generate this.
 
 ```yaml
 ---
@@ -86,28 +89,15 @@ spec:
         image: docker.io/kostiscodefresh/simple-env-app:2.0
 ```
 
-The associated settings for each release that we DO expect to promote between environments are also defined in settings.yml 
+Settings that are expected to be promoted between environments are inside the deployment.yml, service.yml et cetera.  They could be extracted into separate files (using patches), if desired.
 
-```yaml
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: simple-deployment
-spec:
-  template:
-    spec:
-      containers:
-      - name: webserver-simple
-        env:
-        - name: UI_THEME
-          value: "dark"
-        - name: CACHE_SIZE
-          value: "1024kb"
-        - name: PAGE_LIMIT
-          value: "25"
-        - name: SORTING
-          value: "ascending"    
-        - name: N_BUCKETS
-          value: "42"         
-```
+## Branch structure
+
+Each environment (as found in the envs folder) also gets its own branch.  These have the same name as the folder name.
+
+The only branch that is open for commits should be the main (or development) branch.  (Yes, even changes to 'prod' avriants, or env-specific changes have to go through this process.)
+
+Promoting between environments is therefore done exclusively by merging between branches.  Ideally, only fast-forward merges are performed, to completely eliminate any possibility of merge conflicts.
+
+If this is maintained, the branches will not form a tree structure, but a simple timeline, with each environment pointing to a different point on that line (prod will obviously be behind staging, which in turn is behind qa).
+

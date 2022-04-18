@@ -10,7 +10,5 @@ spec:
       - name: webserver-simple
         env:
         - name: ENV
-          value: "integration-gpu"
-        - name: GPU_ENABLED
-          value: "1"
+          value: "staging-us"
       
