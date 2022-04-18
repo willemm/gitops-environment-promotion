@@ -79,7 +79,7 @@ Scenario: A change is required for the specific production-only settings
 Scenario: The promotion flow was followed, but on production, this caused an incident.
 
 * For all production branches:
-  * Roll back the last commit: `git checkout prod-xx; git reset HEAD~1; git push --force`
+  * Roll back the last commit: `git checkout prod-xx; git reset --hard HEAD~1; git push --force`
 
 ### Production incident hotfix
 
@@ -92,7 +92,7 @@ In this scenario, the following steps are followed
 * All currently running promotion flows are canceled
 * A temporary branch is created from production: `git checkout prod-eu; git checkout -b hotfix/incident001`
 * The required changes are made on the `hotfix/incident001` branch
-* All environment branches are rolled back to prod version: `git checkout <env>; git reset origin/prod-eu`
+* All environment branches are rolled back to prod version: `git checkout <env>; git reset --hard origin/prod-eu`
 * Promotion flow is started with `hotfix/incident001` as source: `git checkout qa; git merge --ff hotfix/incident001; ...`
   NB: This should be the normal flow, going through qa, staging, etc.
 * As soon as this flow is finished successfully the incident can be closed.  Following steps are no longer time/sla critical.
@@ -113,7 +113,9 @@ Otherwise, application versions and changes to k8s settings should always be ass
 
 If you really want to do this, however, this is possible with a `git cherry-pick`, by searching for the commit in which the build pipeline committed the newest version.  This should be easy if the build pipeline formats its commit message, and trivial if the build pipeline also tags the gitops-repository when committing a build version.
 
-After this, the normal promotion-flow will be broken, because `merge --ff` is no longer possible.  I think this can be fixed by doing one extra step in the promotion flow, namely `git reset <source branch>; git merge --ff <source branch>`
+After this, the normal promotion-flow will be broken, because `merge --ff` is no longer possible.  I think this can be fixed by changing the merge step in the promotion flow, namely `git reset --hard <source branch>` which is essentially a forced fast-forward merge.
+
+Note that this `reset --hard` could probably be used as default, because the desired workflow is to keep everything the same.  However, this precludes using pull requests as a method of promotion auditing, and also papers over anybody doing out-of-order promotions, which IMO should be flagged and handled consciously.
 
 NB: This obviously applies to all out-of-order promotions
 
@@ -121,7 +123,7 @@ NB: This obviously applies to all out-of-order promotions
 
 I'm not sure why you'd want to do that when it should go through staging-us, but it's simply: `git checkout prod-us; git merge --ff prod-eu`
 
-Or, if you want to force that prod-us becomes the same even if it was ahead: `git checkout prod-us; git reset prod-eu` (NB: Local workspace will now have uncommitted changes)
+Or, if you want to force that prod-us becomes the same even if it was ahead: `git checkout prod-us; git reset --hard prod-eu`
 
 ### Make sure that QA has the same replica count as staging-asia
 
